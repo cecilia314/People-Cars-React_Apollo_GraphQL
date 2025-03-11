@@ -9,7 +9,7 @@ This project consists of a full-stack application using Apollo GraphQL. It inclu
 Make sure you have the following installed on your system:
 
 - Node.js
-- Yarn (preferred package manager)
+- Yarn
 
 ### Installation & Setup
 
@@ -51,17 +51,16 @@ The client will run at http://localhost:3000/.
 
 ## Project Structure
 
+```
 .
 ├── client/ # React app with Apollo Client and React Router
 ├── server/ # Apollo Server with Express.js
 └── README.md # Project documentation
+```
 
 ## Features
 
 - GraphQL API using Apollo Server
-
 - React frontend with Apollo Client
-
 - React Router for navigation
-
 - CRUD operations for managing people and cars
