@@ -10,28 +10,67 @@ const UpdateCar = (props) => {
   const [, forceUpdate] = useState();
   const styles = getSytles();
 
-  const [updateCar] = useMutation(UPDATE_CAR, {
-    refetchQueries: [{ query: GET_PEOPLE }],
-  });
   useEffect(() => {
     forceUpdate({});
   }, []);
+
+  const [updateCar] = useMutation(UPDATE_CAR);
+
   if (loading) return 'Loading...';
   if (error) return `Error! ${error.message}`;
 
   const onFinish = (values) => {
-    const { year, make, model, price, personId } = values;
+    const { year, make, model, price, personId: newPersonId } = values;
 
     updateCar({
       variables: {
         id,
-        year,
+        year: parseInt(year),
         make,
         model,
-        price,
-        personId,
+        price: parseFloat(price),
+        personId: newPersonId,
+      },
+      update: (cache, { data: { updateCar } }) => {
+        // Reassign car to a different person
+        if (personId !== updateCar.personId) {
+          cache.modify({
+            id: cache.identify({ __typename: 'Person', id: personId }),
+            fields: {
+              cars(existingCars = [], { readField }) {
+                return existingCars.filter(
+                  (carRef) => readField('id', carRef) !== updateCar.id
+                );
+              },
+            },
+          });
+
+          // Add new car
+          cache.modify({
+            id: cache.identify({
+              __typename: 'Person',
+              id: updateCar.personId,
+            }),
+            fields: {
+              cars(existingCars = []) {
+                return [...existingCars, updateCar];
+              },
+            },
+          });
+        } else {
+          // Only update price
+          cache.modify({
+            id: cache.identify({ __typename: 'Car', id: updateCar.id }),
+            fields: {
+              price() {
+                return updateCar.price;
+              },
+            },
+          });
+        }
       },
     });
+
     props.onButtonClick();
   };
 
@@ -82,17 +121,12 @@ const UpdateCar = (props) => {
         <Input prefix="$" type="number" step="100" />
       </Form.Item>
 
-      <Form.Item
-        label="Person"
-        name="personId"
-        rules={[{ required: true, message: 'Please select a person' }]}
-      >
-        <Select placeholder="Select a person">
+      <Form.Item label="Person" name="personId">
+        <Select placeholder="Select a person" value={personId}>
           {data.people.map(({ id, firstName, lastName }) => (
-            <Select.Option
-              key={id}
-              value={id}
-            >{`${firstName} ${lastName}`}</Select.Option>
+            <Select.Option key={id} value={id}>
+              {`${firstName} ${lastName}`}
+            </Select.Option>
           ))}
         </Select>
       </Form.Item>
@@ -105,7 +139,7 @@ const UpdateCar = (props) => {
             disabled={
               (!form.isFieldTouched('price') &&
                 !form.isFieldTouched('personId')) ||
-              form.getFieldError().filter(({ errors }) => errors.length).length
+              form.getFieldsError().some(({ errors }) => errors.length)
             }
           >
             Update Car

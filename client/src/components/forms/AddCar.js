@@ -10,9 +10,8 @@ const AddCar = () => {
   const [id] = useState(uuidv4());
   const [form] = Form.useForm();
   const [, forceUpdate] = useState();
-  const [addCar] = useMutation(ADD_CAR, {
-    refetchQueries: [{ query: GET_PEOPLE }],
-  });
+
+  const [addCar] = useMutation(ADD_CAR);
 
   useEffect(() => {
     forceUpdate({});
@@ -23,6 +22,7 @@ const AddCar = () => {
 
   const onFinish = (values) => {
     const { year, make, model, price, personId } = values;
+
     addCar({
       variables: {
         id,
@@ -32,7 +32,28 @@ const AddCar = () => {
         price: parseFloat(price),
         personId,
       },
+      update: (cache, { data: { addCar } }) => {
+        const data = cache.readQuery({ query: GET_PEOPLE });
+
+        const updatedPeople = data.people.map((person) => {
+          if (person.id === personId) {
+            return {
+              ...person,
+              cars: [...person.cars, addCar],
+            };
+          }
+          return person;
+        });
+
+        cache.writeQuery({
+          query: GET_PEOPLE,
+          data: {
+            people: updatedPeople,
+          },
+        });
+      },
     });
+
     form.resetFields();
   };
 

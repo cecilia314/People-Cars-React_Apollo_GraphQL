@@ -1,39 +1,24 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
-import './App.css';
-import Title from './components/layout/Title';
-import People from './components/lists/People';
-import AddPerson from './components/forms/AddPerson';
-import AddCar from './components/forms/AddCar';
-import { useState } from 'react';
+import Home from './components/pages/Home';
+import { ShowPage } from './components/pages/ShowPage';
 
 const client = new ApolloClient({
   uri: 'http://localhost:4000/graphql',
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({}),
 });
 
 const App = () => {
-  const styles = getStyles();
-  const [showAddCar, setShowAddCar] = useState(true);
   return (
     <ApolloProvider client={client}>
-      <div className="App" style={styles.main}>
-        <Title />
-        <AddPerson />
-        {showAddCar && <AddCar />}
-        <People onPeopleFetched={(isEmpty) => setShowAddCar(!isEmpty)} />
-      </div>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/people/:id" element={<ShowPage />} />
+        </Routes>
+      </BrowserRouter>
     </ApolloProvider>
   );
 };
 
-const getStyles = () => ({
-  main: {
-    display: 'grid',
-    margin: 'auto',
-    marginTop: '24px',
-    marginBottom: '24px',
-    width: '90%',
-    border: '2px solid black',
-  },
-});
 export default App;

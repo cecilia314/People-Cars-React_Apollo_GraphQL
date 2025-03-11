@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { List } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import Card from 'antd/es/card/Card';
@@ -53,7 +54,7 @@ const PersonCard = (props) => {
               </List.Item>
             ))}
           </List>
-          Learn More
+          <Link to={`/people/${id}`}>Learn More</Link>
         </Card>
       )}
     </div>

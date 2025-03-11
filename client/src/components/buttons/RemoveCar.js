@@ -1,23 +1,18 @@
 import { DeleteOutlined } from '@ant-design/icons';
 import { useMutation } from '@apollo/client';
-import { GET_PEOPLE, REMOVE_CAR } from '../../graphql/queries';
+import { REMOVE_CAR } from '../../graphql/queries';
 
 const RemoveCar = ({ id, personId }) => {
   const [removeCar] = useMutation(REMOVE_CAR, {
-    update(cache) {
-      const { people } = cache.readQuery({ query: GET_PEOPLE });
-
-      cache.writeQuery({
-        query: GET_PEOPLE,
-        data: {
-          people: people.map((person) =>
-            person.id === personId
-              ? {
-                  ...person,
-                  cars: person.cars.filter((car) => car.id !== id),
-                }
-              : person
-          ),
+    update(cache, { data: { removeCar } }) {
+      cache.modify({
+        id: cache.identify({ __typename: 'Person', id: removeCar.personId }),
+        fields: {
+          cars(existingCars = [], { readField }) {
+            return existingCars.filter(
+              (carRef) => readField('id', carRef) !== removeCar.id
+            );
+          },
         },
       });
     },
@@ -28,8 +23,7 @@ const RemoveCar = ({ id, personId }) => {
 
     if (result) {
       removeCar({
-        variables: { id },
-        refetchQueries: [{ query: GET_PEOPLE }],
+        variables: { id, personId },
       });
     }
   };
